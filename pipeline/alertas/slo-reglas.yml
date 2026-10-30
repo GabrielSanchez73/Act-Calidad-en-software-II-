@@ -1,0 +1,39 @@
+# QG-10 — Reglas en operación (Prometheus). Complementan el pipeline: el gate
+# evita que el defecto entre; estas alertas detectan si reaparece en producción.
+# Requieren exponer métricas en formato Prometheus (acción A-08, prom-client):
+#   http_requests_total{ruta, codigo}   contador de peticiones
+#   db_pool_cola                        peticiones esperando conexión
+#   db_pool_tamano                      tamaño del pool
+# SLO de disponibilidad 99 % (error < 1 %) → presupuesto de error = 1 %.
+# Umbrales de burn rate según Google SRE Workbook, "Alerting on SLOs" (multiventana).
+groups:
+  - name: ecommerce-g1-slo
+    rules:
+      - record: g1:error_ratio:rate5m
+        expr: sum(rate(http_requests_total{codigo=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))
+      - record: g1:error_ratio:rate1h
+        expr: sum(rate(http_requests_total{codigo=~"5.."}[1h])) / sum(rate(http_requests_total[1h]))
+      - record: g1:error_ratio:rate30m
+        expr: sum(rate(http_requests_total{codigo=~"5.."}[30m])) / sum(rate(http_requests_total[30m]))
+      - record: g1:error_ratio:rate6h
+        expr: sum(rate(http_requests_total{codigo=~"5.."}[6h])) / sum(rate(http_requests_total[6h]))
+
+      - alert: PresupuestoErrorConsumoRapido        # D-02: 2 % del presupuesto mensual en 1 h
+        expr: g1:error_ratio:rate1h > (14.4 * 0.01) and g1:error_ratio:rate5m > (14.4 * 0.01)
+        labels: { severidad: page, defecto: D-02 }
+        annotations:
+          resumen: "Burn rate > 14,4× del SLO de error (99 %)"
+          accion: "Revisar cola del pool y rechazos 503 en el dashboard de la A4"
+
+      - alert: PresupuestoErrorConsumoLento         # D-02: 5 % del presupuesto en 6 h
+        expr: g1:error_ratio:rate6h > (6 * 0.01) and g1:error_ratio:rate30m > (6 * 0.01)
+        labels: { severidad: ticket, defecto: D-02 }
+        annotations:
+          resumen: "Burn rate > 6× del SLO de error (99 %)"
+
+      - alert: PoolConexionesSaturado               # D-01 / D-03: aviso antes del codo
+        expr: max_over_time(db_pool_cola[1m]) > 2 * max(db_pool_tamano)
+        for: 2m
+        labels: { severidad: ticket, defecto: D-01 }
+        annotations:
+          resumen: "Cola del pool > 2 × tamaño durante 2 min (en la A3 el codo llegó con cola 9 → 28)"

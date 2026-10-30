@@ -1,0 +1,199 @@
+{
+  "_descripcion": "Fuente única de umbrales de los quality gates. La leen k6 (pipeline/k6/*.js) y el evaluador (pipeline/gates/evaluar_gate.py). Cada regla declara el defecto que previene (trazabilidad con el acta de triage de la Actividad 5).",
+  "version": "1.0.0",
+  "carga_objetivo": {
+    "ruta_critica_req_s": 60,
+    "_justificacion": "Pico esperado de la campaña Black Friday (27-nov-2026, escenario supuesto del triage) = 1,1 × la meseta de pico de la A3 (54,76 req/s); 60 req/s = 30 sesiones/s de búsqueda + detalle",
+    "pool_conexiones": 4
+  },
+  "slo": {
+    "error_pct_max": 1.0,
+    "p95_ms": {
+      "login": 1200,
+      "catalogo": 800,
+      "busqueda": 1000,
+      "detalle": 900,
+      "carrito": 700,
+      "checkout": 1500
+    },
+    "p99_ms": {
+      "login": 2000,
+      "catalogo": 1500,
+      "busqueda": 1800,
+      "detalle": 1600,
+      "carrito": 1200,
+      "checkout": 2500
+    },
+    "p95_global_ms": 800
+  },
+  "reglas": [
+    {
+      "id": "QG-01",
+      "etapa": "estatica",
+      "herramienta": "SonarQube",
+      "bloqueante": true,
+      "regla": "Cobertura de código nuevo >= 80 %",
+      "umbral": 80,
+      "unidad": "%",
+      "defectos": [
+        "D-01",
+        "D-02",
+        "D-03"
+      ],
+      "fuente": "Sonar way"
+    },
+    {
+      "id": "QG-02",
+      "etapa": "estatica",
+      "herramienta": "SonarQube",
+      "bloqueante": true,
+      "regla": "0 issues nuevas, 100 % de hotspots revisados y duplicación de código nuevo <= 3 %",
+      "umbral": 0,
+      "unidad": "issues",
+      "defectos": [
+        "D-01"
+      ],
+      "fuente": "Sonar way"
+    },
+    {
+      "id": "QG-11",
+      "etapa": "estatica",
+      "herramienta": "npm audit + Dependabot",
+      "bloqueante": true,
+      "regla": "0 vulnerabilidades altas o críticas en dependencias de producción",
+      "umbral": 0,
+      "unidad": "vulnerabilidades",
+      "defectos": [
+        "prevención general"
+      ],
+      "fuente": "cero tolerancia a vulnerabilidades bloqueantes (taller de triage del curso)"
+    },
+    {
+      "id": "QG-03",
+      "etapa": "integracion",
+      "herramienta": "node:test + MySQL (Com_select)",
+      "bloqueante": true,
+      "regla": "Presupuesto de consultas SQL por petición",
+      "umbral": {
+        "detalle": 3,
+        "busqueda": 1,
+        "catalogo": 2,
+        "login": 2,
+        "carrito": 3,
+        "checkout": 6
+      },
+      "unidad": "consultas/petición",
+      "defectos": [
+        "D-01",
+        "D-03",
+        "D-04",
+        "D-05"
+      ]
+    },
+    {
+      "id": "QG-04",
+      "etapa": "smoke",
+      "herramienta": "k6",
+      "bloqueante": true,
+      "regla": "Smoke: 6/6 transacciones ejecutadas, checks = 100 %, errores = 0 %",
+      "umbral": {
+        "cobertura_transacciones": 6,
+        "checks_rate": 1.0,
+        "error_rate": 0.0
+      },
+      "unidad": "-",
+      "defectos": [
+        "D-01",
+        "D-02"
+      ]
+    },
+    {
+      "id": "QG-05",
+      "etapa": "rendimiento",
+      "herramienta": "k6",
+      "bloqueante": true,
+      "fail_fast": true,
+      "regla": "Tasa de error de la ruta crítica a carga objetivo < 1 %",
+      "umbral": 1.0,
+      "unidad": "%",
+      "defectos": [
+        "D-02"
+      ]
+    },
+    {
+      "id": "QG-06",
+      "etapa": "rendimiento",
+      "herramienta": "k6",
+      "bloqueante": true,
+      "fail_fast": true,
+      "regla": "P95 y P99 por transacción dentro de su SLO",
+      "umbral": "slo.p95_ms / slo.p99_ms",
+      "unidad": "ms",
+      "defectos": [
+        "D-01",
+        "D-05"
+      ]
+    },
+    {
+      "id": "QG-07",
+      "etapa": "rendimiento",
+      "herramienta": "k6 (sondeo de /metricas)",
+      "bloqueante": true,
+      "regla": "Saturación del pool: cola máx <= 2 × pool y 0 rechazos 503 a carga objetivo",
+      "umbral": {
+        "cola_max": 8,
+        "rechazos_503": 0
+      },
+      "unidad": "peticiones",
+      "defectos": [
+        "D-01",
+        "D-02",
+        "D-03"
+      ]
+    },
+    {
+      "id": "QG-08",
+      "etapa": "rendimiento",
+      "herramienta": "k6",
+      "bloqueante": true,
+      "regla": "Capacidad: throughput sostenido >= 95 % de la carga objetivo (iteraciones descartadas <= 1 %)",
+      "umbral": 0.95,
+      "unidad": "fracción de 60 req/s",
+      "defectos": [
+        "D-03",
+        "D-05"
+      ]
+    },
+    {
+      "id": "QG-09",
+      "etapa": "regresion",
+      "herramienta": "evaluar_gate.py",
+      "bloqueante": true,
+      "regla": "Regresión frente a la línea base del MISMO entorno: P95 por transacción <= +20 % y throughput >= -10 %; huellas distintas = no comparable",
+      "umbral": {
+        "p95_max_incremento_pct": 20,
+        "throughput_max_caida_pct": 10
+      },
+      "unidad": "%",
+      "defectos": [
+        "D-04"
+      ]
+    },
+    {
+      "id": "QG-10",
+      "etapa": "operacion",
+      "herramienta": "Prometheus + Alertmanager",
+      "bloqueante": false,
+      "regla": "Alerta por consumo del presupuesto de error (burn rate 14,4× en 1 h y 5 min) y por cola del pool > 2 × pool durante 2 min",
+      "umbral": {
+        "burn_rate_rapido": 14.4,
+        "burn_rate_lento": 6
+      },
+      "unidad": "×",
+      "defectos": [
+        "D-02",
+        "D-01"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+# Configuración interna de Kilo Code y herramientas IA
+.kilo/
+**/.kilo/
+*.kilo
+
+# Chats, prompts y archivos internos
+*chat*.md
+*chatgpt*
+*claude*
+*copilot*
+*prompt*
+*notas-internas*
+*.ai.md
+*.llm.md
+
+# Borradores y temporales
+*borrador*.md
+*draft*.md
+*.md.bak
+*.md.tmp
+*.log
+*.tmp
+*.bak
+
+# Entornos y dependencias
+.env
+.env.*
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentos de entrega personal, no incluidos en el repositorio
+informe-actividad-5.md
+*.docx
+*.pdf
+~$*

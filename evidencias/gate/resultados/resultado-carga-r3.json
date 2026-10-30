@@ -1,0 +1,46 @@
+{
+  "escenario": "carga",
+  "corrida": "carga-r3",
+  "origen": "Actividad 3 (15-sep-2026) vía datos-a4/",
+  "huella": "Windows | equipo personal | k6 v1.0.0 | sin muestreo de host",
+  "carga_objetivo_req_s": null,
+  "error_pct": 0.0,
+  "p95_global_ms": 200.8,
+  "throughput_req_s": 20.02,
+  "transacciones": {
+    "busqueda": {
+      "p95_ms": 139.6,
+      "p99_ms": 150.1,
+      "n": 264
+    },
+    "carrito": {
+      "p95_ms": 21.1,
+      "p99_ms": 31.0,
+      "n": 507
+    },
+    "catalogo": {
+      "p95_ms": 40.6,
+      "p99_ms": 46.8,
+      "n": 895
+    },
+    "checkout": {
+      "p95_ms": 82.5,
+      "p99_ms": 96.0,
+      "n": 132
+    },
+    "detalle": {
+      "p95_ms": 214.3,
+      "p99_ms": 269.0,
+      "n": 1355
+    },
+    "login": {
+      "p95_ms": 43.3,
+      "p99_ms": 52.2,
+      "n": 450
+    }
+  },
+  "db_cola_max": null,
+  "pool": 4,
+  "rechazos_503": null,
+  "throughput_meseta_req_s": null
+}

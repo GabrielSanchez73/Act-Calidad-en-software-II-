@@ -1,0 +1,26 @@
+{
+  "escenario": "ruta_critica",
+  "corrida": "ruta_critica",
+  "origen": "Actividad 3 (15-sep-2026) vía datos-a4/",
+  "huella": "Linux | 1 vCPU | servicio y k6 en la misma VM | k6 v1.0.0",
+  "carga_objetivo_req_s": 60,
+  "error_pct": 1.329,
+  "p95_global_ms": 8451.1,
+  "throughput_req_s": 31.72,
+  "transacciones": {
+    "busqueda": {
+      "p95_ms": 850.8,
+      "p99_ms": 941.8,
+      "n": 3949
+    },
+    "detalle": {
+      "p95_ms": 9124.6,
+      "p99_ms": 9335.7,
+      "n": 3949
+    }
+  },
+  "db_cola_max": 250.0,
+  "pool": 4,
+  "rechazos_503": 105.0,
+  "throughput_meseta_req_s": 49.4
+}

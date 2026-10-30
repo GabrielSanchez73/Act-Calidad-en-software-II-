@@ -1,0 +1,7 @@
+ts,escenario,tipo,texto
+2026-09-15T01:22:25Z,carga,ventana,Inicio de meseta de estado estable
+2026-09-15T01:25:25Z,carga,ventana,Fin de meseta de estado estable
+2026-09-15T03:08:50Z,pico,ventana,Inicio de meseta de estado estable
+2026-09-15T03:10:00Z,pico,ventana,Fin de meseta de estado estable
+2026-09-15T03:06:55Z,ruta_critica,saturacion,Codo de saturación: P95 supera 1 s en t=200 s
+2026-09-15T03:07:20Z,ruta_critica,error,Primer 503 por pool agotado (backpressure)

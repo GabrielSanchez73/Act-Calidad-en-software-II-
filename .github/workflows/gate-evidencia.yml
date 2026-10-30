@@ -1,0 +1,71 @@
+# Evidencia ejecutable de los quality gates de rendimiento (Actividad 5).
+# Evalúa las corridas reales de la Actividad 3 (datos-a4/).
+# El pipeline completo propuesto para el repositorio de la API
+# se conserva en pipeline/ci/quality-gates.yml.
+
+name: gate-evidencia
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-carga:
+    name: Gate de rendimiento - escenario carga (A3)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install pandas
+
+      - name: Normalizar las corridas de la A3
+        run: python pipeline/gates/desde_datos_a3.py datos-a4 resultados
+
+      - name: QG-05 a QG-09 sobre la corrida de carga
+        run: |
+          python pipeline/gates/evaluar_gate.py \
+            --resultado resultados/resultado-carga.json \
+            --lineas-base resultados/sin-linea-base \
+            --reporte resultados/reporte-carga.md
+
+  gate-ruta-critica:
+    name: Gate de rendimiento - ruta crítica (A3)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install pandas
+
+      - name: Normalizar las corridas de la A3
+        run: python pipeline/gates/desde_datos_a3.py datos-a4 resultados
+
+      - name: QG-05 a QG-09 sobre la ruta crítica (debe bloquear)
+        run: |
+          python pipeline/gates/evaluar_gate.py \
+            --resultado resultados/resultado-ruta_critica.json \
+            --lineas-base resultados/sin-linea-base \
+            --reporte resultados/reporte-ruta-critica.md
+
+      - name: Publicar el reporte
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-quality-gate
+          path: resultados/
+          if-no-files-found: warn

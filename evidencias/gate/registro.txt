@@ -1,0 +1,10 @@
+== caso-1-ruta-critica ==
+código de salida: 1
+== caso-2-carga-linux ==
+código de salida: 0
+== caso-3-windows-vs-base-linux ==
+código de salida: 0
+== caso-4-r2-vs-base-windows ==
+código de salida: 0
+== caso-5-r3-vs-base-windows ==
+código de salida: 0

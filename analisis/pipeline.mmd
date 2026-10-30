@@ -1,0 +1,26 @@
+flowchart LR
+  PR(["Pull request<br/>a main"]) --> E1
+  subgraph E["Job «estatica» · ~4 min"]
+    direction TB
+    E1["npm ci + pruebas<br/>unitarias + cobertura"] --> E0{{"QG-11 npm audit<br/>0 vulnerabilidades<br/>altas o críticas"}} --> E2{{"QG-01 / QG-02<br/>SonarQube «Sonar way»<br/>cobertura nueva ≥ 80 %<br/>0 issues · dup ≤ 3 %"}}
+  end
+  E2 --> S1
+  subgraph S["Job «servicio» · ~8 min · ubuntu-24.04 · MySQL 8 · API en 1 CPU · pool 4"]
+    direction TB
+    S1{{"QG-03 presupuesto de consultas<br/>detalle ≤ 3 · búsqueda ≤ 1"}} --> S2{{"QG-04 smoke k6<br/>6/6 transacciones · checks 100 %"}}
+    S2 --> S3{{"QG-05…08 k6 ruta crítica a 60 req/s<br/>error &lt; 1 % · P95 detalle &lt; 900 ms<br/>cola ≤ 8 · 0 × 503 · ≥ 57 req/s"}}
+    S3 --> S4{{"QG-09 regresión, misma huella<br/>P95 ≤ +20 % · throughput ≥ −10 %"}}
+  end
+  S4 --> M(["Merge a main<br/>+ línea base actualizada"])
+  M --> D["Job «despliegue»<br/>solo si todo pasó<br/>+ smoke posdespliegue"]
+  D --> O["QG-10 en operación<br/>burn rate 14,4× / 6×<br/>cola &gt; 2 × pool por 2 min"]
+  E -. "cualquier gate falla" .-> X(["PR bloqueado<br/>reporte por regla en el PR"])
+  S -. "cualquier gate falla<br/>(abortOnFail corta k6)" .-> X
+  classDef gate fill:#eef3fb,stroke:#2a78d6,color:#0b0b0b
+  classDef ok fill:#e8f6ef,stroke:#1baf7a,color:#0b0b0b
+  classDef ko fill:#fbeee8,stroke:#c4471b,color:#0b0b0b
+  class E0,E2,S1,S2,S3,S4 gate
+  class M,D,O ok
+  class X ko
+  style E fill:#fafaf8,stroke:#8a8984
+  style S fill:#fafaf8,stroke:#8a8984

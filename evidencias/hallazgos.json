@@ -1,0 +1,190 @@
+{
+  "D-01": {
+    "p95_global_ms": 8451.1,
+    "p99_global_ms": 9244.7,
+    "p95_detalle_ms": 9124.6,
+    "p99_detalle_ms": 9335.7,
+    "max_detalle_ms": 9452.9,
+    "p50_detalle_ms": 51.7,
+    "slo_detalle_ms": 900,
+    "veces_sobre_slo": 10.1,
+    "p95_busqueda_ms": 850.8,
+    "slo_busqueda_ms": 1000,
+    "margen_busqueda_pct": 14.9,
+    "p95_detalle_carga_ms": 73.2,
+    "ratio_detalle_vs_busqueda": 10.7,
+    "codo_t_s": 200,
+    "codo_ts": "2026-09-15T03:06:55Z",
+    "cola_max": 250,
+    "pool": 4,
+    "cpu_host_max_pct": 47.5,
+    "cpu_sut_max_pct": 12.0,
+    "lag_p99_max_ms": 11.0,
+    "peticiones": 7898,
+    "sesiones": 3949
+  },
+  "D-02": {
+    "error_pct": 1.329,
+    "errores": 105,
+    "rechazos_503": 105,
+    "peticiones": 7898,
+    "presupuesto_consumido_pct": 132.9,
+    "ventana_errores_t_s": [
+      225,
+      240
+    ],
+    "error_pct_max_bucket": 20.285,
+    "cola_al_primer_503": 250,
+    "p95_previo_al_503_ms": 7287.3,
+    "otros_escenarios_error_pct": {
+      "carga": 0.0,
+      "estres": 0.0,
+      "pico": 0.0,
+      "resistencia": 0.0
+    }
+  },
+  "D-03": {
+    "throughput_max_sin_saturar_req_s": 49.4,
+    "sesiones_s_max": 24.7,
+    "tiempo_retencion_conexion_ms": 81.0,
+    "tiempo_retencion_por_sesion_ms": 161.9,
+    "p50_detalle_baja_carga_ms": 51.7,
+    "throughput_en_saturacion_req_s": [
+      42.4,
+      49.2
+    ],
+    "vus_en_saturacion": [
+      13.0,
+      224.0
+    ],
+    "little": [
+      {
+        "t_s": 195,
+        "vus": 13.0,
+        "rps": 49.2,
+        "R_little_s": 0.26,
+        "p50_ms": 134.1,
+        "p95_ms": 385.2,
+        "cola": 9
+      },
+      {
+        "t_s": 200,
+        "vus": 33.0,
+        "rps": 47.4,
+        "R_little_s": 0.7,
+        "p50_ms": 197.4,
+        "p95_ms": 1075.3,
+        "cola": 28
+      },
+      {
+        "t_s": 205,
+        "vus": 66.0,
+        "rps": 45.6,
+        "R_little_s": 1.45,
+        "p50_ms": 300.4,
+        "p95_ms": 2163.5,
+        "cola": 60
+      },
+      {
+        "t_s": 210,
+        "vus": 106.0,
+        "rps": 46.0,
+        "R_little_s": 2.3,
+        "p50_ms": 415.0,
+        "p95_ms": 3585.1,
+        "cola": 101
+      },
+      {
+        "t_s": 215,
+        "vus": 158.0,
+        "rps": 43.6,
+        "R_little_s": 3.62,
+        "p50_ms": 595.1,
+        "p95_ms": 5263.5,
+        "cola": 152
+      },
+      {
+        "t_s": 220,
+        "vus": 224.0,
+        "rps": 42.4,
+        "R_little_s": 5.28,
+        "p50_ms": 799.1,
+        "p95_ms": 7287.3,
+        "cola": 216
+      }
+    ],
+    "estres_pendiente_req_s_por_vu": 0.357,
+    "estres_r": 0.9983,
+    "estres_throughput_max_req_s": 73.0,
+    "estres_vus_max": 204.0,
+    "estres_cola_max": 9,
+    "pico_throughput_meseta_req_s": 54.76
+  },
+  "D-04": {
+    "p95_global_linux_ms": 106.6,
+    "p95_global_windows_media_ms": 201.4,
+    "cv_p95_windows_pct": 0.89,
+    "incremento_p95_global_pct": 89.0,
+    "throughput_linux": 19.68,
+    "throughput_windows_media": 19.8,
+    "por_transaccion": [
+      {
+        "transaccion": "busqueda",
+        "p50_linux": 111.2,
+        "p50_windows": 117.2,
+        "p95_linux": 128.6,
+        "p95_windows": 138.0,
+        "delta_p50_ms": 6.0,
+        "factor_p50": 1.1
+      },
+      {
+        "transaccion": "carrito",
+        "p50_linux": 5.7,
+        "p50_windows": 11.8,
+        "p95_linux": 14.0,
+        "p95_windows": 23.3,
+        "delta_p50_ms": 6.1,
+        "factor_p50": 2.1
+      },
+      {
+        "transaccion": "catalogo",
+        "p50_linux": 20.6,
+        "p50_windows": 26.9,
+        "p95_linux": 33.5,
+        "p95_windows": 40.6,
+        "delta_p50_ms": 6.3,
+        "factor_p50": 1.3
+      },
+      {
+        "transaccion": "checkout",
+        "p50_linux": 37.3,
+        "p50_windows": 52.3,
+        "p95_linux": 58.8,
+        "p95_windows": 79.0,
+        "delta_p50_ms": 15.0,
+        "factor_p50": 1.4
+      },
+      {
+        "transaccion": "detalle",
+        "p50_linux": 50.1,
+        "p50_windows": 181.1,
+        "p95_linux": 73.2,
+        "p95_windows": 212.8,
+        "delta_p50_ms": 131.0,
+        "factor_p50": 3.6
+      },
+      {
+        "transaccion": "login",
+        "p50_linux": 30.8,
+        "p50_windows": 35.6,
+        "p95_linux": 35.6,
+        "p95_windows": 43.7,
+        "delta_p50_ms": 4.8,
+        "factor_p50": 1.2
+      }
+    ],
+    "delta_ida_vuelta_estimado_ms": 6.2,
+    "consultas_detalle_estimadas": 21.1,
+    "corridas_windows_sin_metricas_host": 4
+  }
+}

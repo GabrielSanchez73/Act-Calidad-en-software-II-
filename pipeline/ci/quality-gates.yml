@@ -1,0 +1,162 @@
+# Quality gates del API E-commerce Flutter G1 (Actividad 5).
+# Flujo: desarrollo → pruebas → quality gates → despliegue (solo si todo pasa).
+# Orden fail-fast: de lo más barato a lo más caro. Si una etapa falla, las
+# siguientes no se ejecutan y el PR queda bloqueado (regla de protección de rama
+# sobre los checks "estatica" y "servicio").
+#
+# Trazabilidad: cada paso cita la regla (QG-xx) de pipeline/gates/umbrales.json y
+# esta, a su vez, el defecto del acta de triage que previene (D-01 … D-04).
+name: quality-gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: qg-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  K6_VERSION: "1.0.0"          # misma versión de la Actividad 3
+
+jobs:
+  estatica:
+    name: estatica (QG-11, QG-01, QG-02)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }             # Sonar necesita historial para "código nuevo"
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - name: QG-11 — 0 vulnerabilidades altas o críticas en dependencias
+        run: npm audit --omit=dev --audit-level=high
+      - name: Pruebas unitarias con cobertura (lcov para Sonar)
+        run: npm test --if-present -- --coverage
+      - name: QG-01 / QG-02 — SonarQube quality gate "Sonar way"
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: -Dproject.settings=pipeline/sonar-project.properties
+
+  servicio:
+    name: servicio (QG-03 … QG-09)
+    needs: estatica
+    runs-on: ubuntu-24.04             # runner fijo = huella estable para QG-09 (D-04)
+    timeout-minutes: 25
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci
+          MYSQL_DATABASE: ecommercefluterg1
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci" --health-interval=5s
+          --health-timeout=3s --health-retries=20
+    env:
+      BASE_URL: http://localhost:3000
+      DB_HOST: 127.0.0.1
+      DB_USER: root
+      DB_PASSWORD: ci
+      DB_NAME: ecommercefluterg1
+      DB_POOL_MAX: "4"                # mismo tamaño de pool que la Actividad 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+
+      - name: Esquema y datos semilla (mismo volumen que la Actividad 3)
+        run: |
+          mysql -h 127.0.0.1 -uroot -pci ecommercefluterg1 < db/esquema.sql
+          mysql -h 127.0.0.1 -uroot -pci ecommercefluterg1 < db/semilla.sql
+
+      - name: Levantar el API fijado a 1 CPU (como la VM de 1 vCPU de la A3)
+        run: |
+          nohup taskset -c 0 npm start > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf "$BASE_URL/metricas" > /dev/null && exit 0; sleep 1; done
+          echo "El API no respondió en 60 s"; cat api.log; exit 1
+
+      - name: Huella del entorno (QG-09 solo compara corridas con la misma huella)
+        run: |
+          echo "HUELLA=$(uname -s) $(uname -m) | $(nproc) cpu runner, API en 1 cpu | node $(node -v) | mysql 8.0 | k6 ${K6_VERSION} | pool ${DB_POOL_MAX}" >> "$GITHUB_ENV"
+
+      - name: QG-03 — Presupuesto de consultas por petición (guardia N+1, D-01/D-03)
+        run: node --test pipeline/tests/presupuesto-consultas.test.mjs
+
+      - uses: grafana/setup-k6-action@v1
+        with: { k6-version: "${{ env.K6_VERSION }}" }
+
+      - name: QG-04 — Smoke de 6 transacciones (fail-fast)
+        run: k6 run --quiet pipeline/k6/smoke.js
+
+      - name: QG-05 … QG-08 — Gate de rendimiento de la ruta crítica a 60 req/s
+        id: perf
+        continue-on-error: true       # se deja seguir solo para publicar el reporte; el último paso falla el job
+        run: |
+          mkdir -p resultados
+          k6 run pipeline/k6/ruta-critica-gate.js
+
+      - name: QG-09 — Regresión frente a la línea base de la misma huella + reporte
+        id: evaluador
+        if: always()
+        run: |
+          python3 pipeline/gates/evaluar_gate.py \
+            --resultado resultados/resultado-ruta_critica.json \
+            --lineas-base pipeline/gates/lineas-base \
+            --reporte resultados/reporte-gate.md \
+            ${{ github.event_name == 'push' && '--guardar-linea-base' || '' }}
+
+      - name: Comentar el reporte en el PR
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: quality-gate-rendimiento
+          path: resultados/reporte-gate.md
+
+      - name: Publicar evidencias (resultados k6, reporte, log del API)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencias-quality-gate-${{ github.sha }}
+          path: |
+            resultados/
+            api.log
+            pipeline/gates/lineas-base/
+
+      - name: Veredicto final del gate de rendimiento
+        if: always()
+        run: |
+          if [ "${{ steps.perf.outcome }}" = "failure" ]; then
+            echo "::error title=Quality gate::k6 incumplió thresholds (QG-05 … QG-08). Ver reporte del PR."; exit 1
+          fi
+          if [ "${{ steps.evaluador.outcome }}" = "failure" ]; then
+            echo "::error title=Quality gate::regresión frente a la línea base (QG-09)."; exit 1
+          fi
+
+  despliegue:
+    name: despliegue (solo main, tras pasar todos los gates)
+    needs: servicio
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: produccion          # aprobación manual opcional en GitHub Environments
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desplegar
+        # Reemplazar por el mecanismo real del proyecto (p. ej., AWS EC2 con SSH o
+        # Elastic Beanstalk). El job solo existe si estatica y servicio pasaron.
+        run: ./scripts/desplegar.sh
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+      - uses: grafana/setup-k6-action@v1
+        with: { k6-version: "${{ env.K6_VERSION }}" }
+      - name: Smoke posdespliegue contra producción (QG-04 con datos sintéticos)
+        run: k6 run --quiet pipeline/k6/smoke.js -e BASE_URL=${{ vars.PROD_URL }}
